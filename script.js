@@ -6,5 +6,3 @@ div.innerHTML="Hello World"
 div.append(strong)
 body.append(div)
 const hi=document.querySelector(".hi")
-hi.remove()
-
