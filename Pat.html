@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-User Quiz with Statistics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js for statistics -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        .quiz-container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            font-size: 22px;
+        }
+        .option {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .option:hover {
+            background-color: #ddd;
+        }
+        .correct { background-color: green !important; color: white; }
+        .wrong { background-color: red !important; color: white; }
+        #next, #startQuiz {
+            padding: 10px 15px;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #next { display: none; }
+        #next:hover, #startQuiz:hover { background-color: #0056b3; }
+        #stats { margin-top: 30px; display: none; }
+        canvas { max-width: 400px; margin: auto; }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h2>Enter Number of Participants</h2>
+        <input type="number" id="numParticipants" min="1" placeholder="Number of Students">
+        <button id="startQuiz">Start Quiz</button>
+        <div id="quiz"></div>
+        <button id="next">Next Question</button>
+        <p id="result"></p>
+    </div>
+
+    <div id="stats">
+        <h3>Quiz Performance for All Students</h3>
+        <canvas id="quizChart"></canvas>
+    </div>
+
+    <script>
+        // Cache DOM elements
+        const quizContainer = document.getElementById("quiz");
+        const nextButton = document.getElementById("next");
+        const resultContainer = document.getElementById("result");
+        const numParticipantsInput = document.getElementById("numParticipants");
+        const startQuizButton = document.getElementById("startQuiz");
+        const statsContainer = document.getElementById("stats");
+
+        // Quiz data and state variables
+        let participants = []; // Stores each student's result
+        let currentParticipantIndex = 0;
+        let currentQuestionIndex = 0;
+        
+        const quizData = [
+            { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], correct: "Paris" },
+            { question: "Which language is used for web development?", options: ["Python", "JavaScript", "C++", "Java"], correct: "JavaScript" },
+            { question: "What is 5 + 3?", options: ["5", "8", "10", "15"], correct: "8" }
+        ];
+
+        // Event listeners
+        startQuizButton.addEventListener('click', startQuiz);
+
+        // We'll handle the next button's functionality through a function that changes based on context
+        function handleNextButtonClick() {
+            if (currentQuestionIndex >= quizData.length) {
+                nextStudent();
+            } else {
+                nextQuestion();
+            }
+        }
+
+        // Attach initial click handler
+        nextButton.addEventListener('click', handleNextButtonClick);
+
+        function startQuiz() {
+            const numParticipants = parseInt(numParticipantsInput.value);
+            if (isNaN(numParticipants) || numParticipants < 1) {
+                alert("Please enter a valid number of participants!");
+                return;
+            }
+
+            participants = Array(numParticipants).fill().map(() => ({ correct: 0, wrong: 0 }));
+
+            numParticipantsInput.style.display = "none";
+            startQuizButton.style.display = "none";
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            quizContainer.innerHTML = "";
+            resultContainer.textContent = "";
+
+            if (currentParticipantIndex >= participants.length) {
+                finishQuiz();
+                return;
+            }
+
+            if (currentQuestionIndex >= quizData.length) {
+                resultContainer.textContent = "Student " + (currentParticipantIndex + 1) + " completed!";
+                nextButton.textContent = "Next Student";
+                nextButton.style.display = "block";
+                return;
+            }
+
+            const questionData = quizData[currentQuestionIndex];
+
+            const questionElement = document.createElement("h2");
+            questionElement.textContent = "Student " + (currentParticipantIndex + 1) + ": " + questionData.question;
+            quizContainer.appendChild(questionElement);
+
+            questionData.options.forEach(option => {
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.className = "option";
+                button.addEventListener('click', () => checkAnswer(button, questionData.correct));
+                quizContainer.appendChild(button);
+            });
+        }
+
+        function checkAnswer(selectedButton, correctAnswer) {
+            const buttons = document.querySelectorAll(".option");
+            const isCorrect = selectedButton.textContent === correctAnswer;
+
+            buttons.forEach(button => {
+                button.disabled = true;
+                if (button.textContent === correctAnswer) {
+                    button.classList.add("correct");
+                } else if (button === selectedButton && !isCorrect) {
+                    button.classList.add("wrong");
+                }
+            });
+
+            if (isCorrect) {
+                participants[currentParticipantIndex].correct++;
+                resultContainer.textContent = "Correct!";
+            } else {
+                participants[currentParticipantIndex].wrong++;
+                resultContainer.textContent = "Wrong! The correct answer is: " + correctAnswer;
+            }
+
+            nextButton.textContent = "Next Question";
+            nextButton.style.display = "block";
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+            
+            if (currentQuestionIndex < quizData.length) {
+                nextButton.style.display = "none";
+            }
+        }
+
+        function nextStudent() {
+            currentParticipantIndex++;
+            currentQuestionIndex = 0;
+            loadQuestion();
+            nextButton.textContent = "Next Question";
+            nextButton.style.display = "none";
+        }
+
+        function finishQuiz() {
+            resultContainer.textContent = "Quiz Completed!";
+            nextButton.style.display = "none";
+            showFinalResults();
+        }
+
+        function showFinalResults() {
+            statsContainer.style.display = "block";
+
+            const labels = participants.map((_, index) => "Student " + (index + 1));
+            const correctData = participants.map(student => student.correct);
+            const wrongData = participants.map(student => student.wrong);
+
+            const ctx = document.getElementById('quizChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: "Correct", data: correctData, backgroundColor: "green" },
+                        { label: "Wrong", data: wrongData, backgroundColor: "red" }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: quizData.length
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
