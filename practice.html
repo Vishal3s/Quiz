@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="" id="title">
+        <h1>Quiz</h1>
+    </div>
+    <script>
+        const body=document.body;
+        body.append("Hello world");
+        const div=document.createElement("div");
+        div.innerHTML="This is for div";
+        body.append(div)
+        const title=document.querySelector("#title");
+        title.remove();
+        const quizData = [
+            { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], correct: "Paris" },
+            { question: "Which language is used for web development?", options: ["Python", "JavaScript", "C++", "Java"], correct: "JavaScript" },
+            { question: "What is 5 + 3?", options: ["5", "8", "10", "15"], correct: "8" }
+        ];
+
+        function loadQuestion(){
+            
+        }
+
+    </script>
+</body>
+</html>
